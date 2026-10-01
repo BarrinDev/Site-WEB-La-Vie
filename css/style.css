@@ -1,0 +1,308 @@
+/* ==========================================================================
+   Studio La Vie
+   Base: versão estática e legível (sem JS ou com movimento reduzido).
+   html.motion: cenas fixas controladas pelo scroll.
+   ========================================================================== */
+
+:root {
+  --creme: #f5efe7;     /* paredes do salão */
+  --linho: #ebe1d4;
+  --bege: #cbb79d;      /* poltronas */
+  --caramelo: #a6562f;  /* pés de madeira das poltronas — ações (branco: 5,4:1) */
+  --nude: #e9c3b8;      /* base das unhas — só detalhe */
+  --cafe: #2d231f;      /* texto e fundo escuro */
+  --cafe-2: #6a5a50;    /* secundário sobre creme (6,2:1) */
+  --creme-2: #d9cdbf;   /* secundário sobre café (9:1) */
+
+  --serif: 'Instrument Serif', 'Didot', Georgia, serif;
+  --sans: 'Hanken Grotesk', 'Segoe UI', sans-serif;
+  --lado: clamp(1.1rem, 5vw, 5rem);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+body {
+  margin: 0; background: var(--creme); color: var(--cafe);
+  font-family: var(--sans); font-size: clamp(1.05rem, 1rem + .25vw, 1.2rem); line-height: 1.6;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+img { display: block; max-width: 100%; }
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+em { font-style: italic; }
+
+:focus-visible { outline: 2px solid var(--caramelo); outline-offset: 4px; }
+.cena-espaco :focus-visible, .mapa :focus-visible, .cena-final :focus-visible { outline-color: var(--nude); }
+
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.pular { position: fixed; z-index: 300; top: .75rem; left: .75rem; padding: .7rem 1rem; background: var(--cafe); color: var(--creme); transform: translateY(-180%); }
+.pular:focus { transform: none; }
+
+.line { overflow: hidden; padding-bottom: .1em; margin-bottom: -.1em; }
+.word { display: inline-block; }
+
+/* ---------- Fotos + espaço reservado ---------- */
+.frame { position: relative; overflow: hidden; background: var(--linho); }
+.frame img { width: 100%; height: 100%; object-fit: cover; }
+.frame.vazio img { visibility: hidden; }
+.frame.vazio::after {
+  content: attr(data-rotulo); position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 1rem;
+  font-family: var(--serif); font-style: italic; font-size: 1.15rem; color: var(--cafe-2);
+  border: 1px solid var(--bege);
+}
+
+/* ---------- Preloader ---------- */
+.pre { display: none; }
+html.motion .pre { display: grid; place-items: center; align-content: center; gap: 1rem; position: fixed; inset: 0; z-index: 200; background: var(--creme); pointer-events: none; }
+.pre-assinatura { width: min(72vw, 380px); overflow: visible; }
+.pre-traco { fill: none; stroke: var(--cafe); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.pre-num { font-family: var(--serif); font-style: italic; font-size: 1.1rem; color: var(--cafe-2); font-variant-numeric: tabular-nums; }
+
+/* ---------- Interface fixa ---------- */
+.topo { position: fixed; inset: 0 0 auto; z-index: 90; display: flex; justify-content: space-between; align-items: center; padding: 1rem var(--lado); pointer-events: none; mix-blend-mode: difference; color: #fff; }
+.topo > * { pointer-events: auto; }
+.marca { font-family: var(--serif); font-size: 1.6rem; line-height: 1; text-decoration: none; }
+.menu-btn { min-height: 44px; font-family: var(--serif); font-style: italic; font-size: 1.35rem; border-bottom: 1px solid currentColor; }
+
+.prog { position: fixed; z-index: 80; right: clamp(.5rem, 1.4vw, 1.4rem); top: 50%; width: 26px; height: 44vh; transform: translateY(-50%); }
+html:not(.motion) .prog { display: none; }
+.prog-linha { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(106, 90, 80, .35); }
+.prog-cheio { position: absolute; inset: 0; background: var(--caramelo); transform-origin: 50% 0; transform: scaleY(0); }
+.prog-pontos li { position: absolute; left: 0; width: 26px; height: 26px; margin-top: -13px; }
+.prog-pontos button { width: 100%; height: 100%; display: grid; place-items: center; }
+.prog-pontos button::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--creme); border: 1px solid var(--cafe-2); transition: transform .3s, background .3s; }
+.prog-pontos .atual button::before { background: var(--caramelo); border-color: var(--caramelo); transform: scale(1.5); }
+.prog-pontos .rotulo { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-family: var(--serif); font-style: italic; font-size: 1rem; background: var(--cafe); color: var(--creme); padding: .1rem .6rem; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.prog-pontos button:hover .rotulo, .prog-pontos button:focus-visible .rotulo { opacity: 1; }
+
+.mapa { position: fixed; inset: 0; z-index: 150; background: var(--cafe); color: var(--creme); overflow-y: auto; }
+.mapa[hidden] { display: none; }
+.mapa-dentro { min-height: 100%; display: grid; align-content: space-between; gap: 2.4rem; padding: 5.5rem var(--lado) 2rem; }
+.mapa-fechar { position: absolute; top: 1rem; right: var(--lado); min-height: 44px; font-family: var(--serif); font-style: italic; font-size: 1.35rem; border-bottom: 1px solid currentColor; }
+.mapa-lista a { display: flex; align-items: baseline; gap: 1rem; padding: .3rem 0; text-decoration: none; font-family: var(--serif); font-size: clamp(2.2rem, 6vw, 5rem); line-height: 1.05; }
+.mapa-lista a:hover .mapa-nome { font-style: italic; }
+.mapa-n { font-family: var(--sans); font-size: .9rem; color: var(--creme-2); min-width: 1.4rem; }
+.aqui { margin-left: auto; align-self: center; font-family: var(--sans); font-size: .9rem; background: var(--creme); color: var(--cafe); padding: .15rem .7rem; border-radius: 999px; white-space: nowrap; }
+.mapa-pe { color: var(--creme-2); }
+
+.zap { position: fixed; z-index: 85; right: clamp(.9rem, 2vw, 1.8rem); bottom: clamp(.9rem, 2vw, 1.8rem); width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--caramelo); color: #fff; transition: transform .3s; }
+.zap:hover { transform: scale(1.06); }
+.zap svg { width: 26px; height: 26px; }
+
+.btn { display: inline-flex; align-items: center; min-height: 52px; text-decoration: none; font-weight: 500; }
+.btn-linha { font-family: var(--serif); font-style: italic; font-size: 1.5rem; border-bottom: 1px solid currentColor; min-height: 44px; }
+.btn-grande { background: var(--caramelo); color: #fff; padding: 1.1rem 2.2rem; border-radius: 999px; font-size: 1.2rem; transition: background .3s; }
+.btn-grande:hover { background: #8c4524; }
+
+/* ==========================================================================
+   CENAS — base estática
+   ========================================================================== */
+.cena { position: relative; }
+
+/* 1 · Abertura */
+.cena-abertura .palco { padding: 7rem var(--lado) 4rem; display: grid; gap: 2rem; }
+.ab-tit { font-family: var(--serif); font-weight: 400; line-height: .82; font-size: clamp(4.4rem, 16vw, 16rem); letter-spacing: -.02em; }
+.ab-palavra { display: inline-block; margin-right: .2em; }
+.ab-foto { width: min(80vw, 380px); aspect-ratio: 513 / 811; border-radius: 999px 999px 0 0; }
+.ab-foto img { object-position: 50% 70%; }
+.ab-linha { max-width: 30ch; color: var(--cafe-2); font-size: 1.15em; }
+.folha { display: none; }
+
+/* 2 · Serviços */
+.cena-serv { padding: 5rem var(--lado); background: var(--linho); }
+.serv-tit { font-family: var(--serif); font-weight: 400; font-size: clamp(2.8rem, 6vw, 5.6rem); line-height: 1; margin-bottom: 2.6rem; }
+.servs { display: grid; gap: 4rem; }
+.serv { display: grid; gap: 1.5rem; }
+.serv-foto { width: min(80vw, 360px); aspect-ratio: 3 / 4; }
+.serv-n { font-family: var(--serif); font-style: italic; font-size: 1.4rem; color: var(--caramelo); }
+.serv-nome { font-family: var(--serif); font-weight: 400; font-size: clamp(2.6rem, 5vw, 5rem); line-height: 1; margin: .2rem 0 1rem; }
+.serv-txt p { max-width: 38ch; color: var(--cafe-2); }
+.serv-tempo { margin-top: 1rem; }
+.serv-tempo strong { font-family: var(--serif); font-weight: 400; font-size: 1.6em; color: var(--cafe); }
+
+/* 3 · Mural */
+.cena-mural { padding: 5rem var(--lado); }
+.mural-tit { font-family: var(--serif); font-weight: 400; font-style: italic; font-size: clamp(3rem, 8vw, 8rem); line-height: .9; }
+.mural-sub { margin-top: .8rem; color: var(--cafe-2); }
+.mural { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 1rem; margin-top: 2.4rem; }
+.peca .frame { aspect-ratio: 3 / 4; }
+.peca-leg { margin-top: .6rem; color: var(--cafe-2); font-size: .95rem; }
+.cafe { display: none; }
+
+/* 4 · Espaço */
+.cena-espaco { background: var(--cafe); color: var(--creme); padding: 5rem var(--lado); }
+.trilho { display: grid; gap: 3rem; }
+.esp-tit { font-family: var(--serif); font-weight: 400; font-size: clamp(3rem, 8vw, 8rem); line-height: .9; }
+.esp-abre p { margin-top: 1rem; max-width: 28ch; color: var(--creme-2); }
+.sala .frame { aspect-ratio: 4 / 5; width: min(100%, 420px); }
+.s-poltronas img { object-position: 92% 82%; transform: scale(1.7); transform-origin: 92% 82%; }
+.s-lustre img { object-position: 38% 32%; transform: scale(1.9); transform-origin: 38% 32%; }
+.s-pedicure img { object-position: 46% 70%; transform: scale(1.9); transform-origin: 46% 70%; }
+.s-lustre .frame { border-radius: 999px 999px 0 0; }
+.s-pedicure .frame { aspect-ratio: 1; border-radius: 50%; }
+.sala figcaption { margin-top: .8rem; color: var(--creme-2); max-width: 32ch; }
+.sala figcaption strong { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.6rem; color: var(--creme); }
+
+/* 5 · Como agendar */
+.cena-agendar { background: var(--creme); padding: 5rem var(--lado); }
+.cena-agendar .palco { display: grid; gap: 3rem; }
+.ag-tit { font-family: var(--serif); font-weight: 400; font-size: clamp(2.8rem, 6vw, 6rem); line-height: .95; max-width: 12ch; }
+.ag-passos { display: grid; gap: .8rem; margin-top: 2rem; }
+.ag-passos li { display: flex; align-items: baseline; gap: 1rem; font-size: 1.2em; }
+.ag-passos span { font-family: var(--serif); font-style: italic; font-size: 1.8em; color: var(--caramelo); min-width: 1.2ch; }
+.conversa { display: grid; gap: .7rem; max-width: 440px; padding: 1.4rem; background: var(--linho); border-radius: 28px; }
+.msg { max-width: 82%; padding: .7rem 1rem; border-radius: 18px; font-size: 1rem; line-height: 1.4; }
+.msg-cliente { justify-self: end; background: var(--cafe); color: var(--creme); border-bottom-right-radius: 4px; }
+.msg-studio { justify-self: start; background: var(--creme); border-bottom-left-radius: 4px; }
+
+/* 6 · Localização */
+.cena-local { background: var(--linho); }
+.local-grade { display: grid; gap: 3rem; padding: 6rem var(--lado) 0; }
+.local-tit { font-family: var(--serif); font-weight: 400; font-style: italic; font-size: clamp(3rem, 8vw, 8rem); line-height: .9; margin-bottom: 2rem; }
+.dados { display: grid; gap: 1rem; margin-bottom: 2rem; }
+.dados div { display: grid; grid-template-columns: 6.4rem 1fr; gap: 1rem; padding-top: .9rem; border-top: 1px solid var(--bege); }
+.dados dt { font-family: var(--serif); font-style: italic; font-size: 1.2rem; color: var(--caramelo); }
+.local-mapa { height: 60svh; min-height: 340px; margin: 0 calc(var(--lado) * -1); }
+.local-mapa iframe { width: 100%; height: 100%; border: 0; filter: grayscale(.8) sepia(.15); }
+
+/* 7 · Final */
+.cena-final { background: var(--creme); }
+.final-caixa { background: var(--cafe); color: var(--creme); padding: 7rem var(--lado); text-align: center; display: grid; justify-items: center; gap: 2rem; }
+.final-tit { font-family: var(--serif); font-weight: 400; font-size: clamp(3rem, 8vw, 8.4rem); line-height: .92; max-width: 13ch; }
+.final-obs { color: var(--creme-2); font-size: 1rem; }
+.rodape { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem 2rem; padding: 2.4rem var(--lado) 6.5rem; color: var(--cafe-2); font-size: 1rem; }
+.rodape-marca { font-family: var(--serif); font-size: 1.7rem; color: var(--cafe); margin-right: auto; }
+
+@media (min-width: 900px) {
+  .serv { grid-template-columns: auto 1fr; gap: 5vw; align-items: center; }
+  .trilho { grid-template-columns: repeat(2, 1fr); align-items: end; }
+  .cena-agendar .palco { grid-template-columns: 1fr 1fr; align-items: center; }
+  .local-grade { grid-template-columns: 1fr 1.1fr; gap: 5vw; padding-top: 0; }
+  .local-info { padding: 8rem 0 5rem; }
+  .local-mapa { margin: 0 calc(var(--lado) * -1) 0 0; height: auto; min-height: 90vh; }
+}
+
+/* ==========================================================================
+   CENAS — versão cinematográfica
+   ========================================================================== */
+html.motion .topo, html.motion .zap, html.motion .prog { opacity: 0; }
+html.motion .palco { position: relative; height: 100svh; overflow: hidden; }
+html.motion .cena-serv, html.motion .cena-mural, html.motion .cena-espaco, html.motion .cena-agendar { padding: 0; }
+
+/* 1 · Abertura: as palavras se afastam e o espelho abre */
+html.motion .cena-abertura .palco { padding: 0; display: block; background: var(--creme); }
+html.motion .ab-foto { position: absolute; left: 50%; top: 50%; width: min(34vw, 50vh); margin: 0; transform: translate(-50%, -50%); border-radius: 0; clip-path: inset(46% 46% 46% 46% round 999px); }
+html.motion .ab-tit { position: absolute; inset: 0; z-index: 2; font-size: clamp(5rem, 17vw, 17rem); pointer-events: none; }
+html.motion .ab-palavra { position: absolute; margin: 0; white-space: nowrap; }
+html.motion .ab-studio { left: 50%; top: 14vh; }
+html.motion .ab-la { right: 50%; top: 44vh; margin-right: .06em; }
+html.motion .ab-vie { left: 50%; top: 44vh; margin-left: .06em; }
+html.motion .ab-linha { position: absolute; z-index: 3; left: var(--lado); bottom: 7vh; max-width: 26ch; }
+html.motion .folha { display: block; position: absolute; inset: 0; z-index: 6; background: var(--linho); transform: translateX(101%); }
+
+/* 2 · Serviços */
+html.motion .cena-serv .palco { background: var(--linho); }
+html.motion .serv-tit { position: absolute; z-index: 3; left: var(--lado); top: 5.6rem; margin: 0; font-size: clamp(1.5rem, 2.2vw, 2.1rem); font-style: italic; }
+html.motion .servs { position: absolute; inset: 0; display: block; }
+html.motion .serv { position: absolute; inset: 0; display: block; }
+html.motion .serv-foto { position: absolute; right: 12vw; top: 50%; height: 72vh; width: auto; margin-top: -36vh; clip-path: inset(0 0 0 100%); }
+html.motion .serv-txt { position: absolute; left: var(--lado); top: 50%; width: 40vw; transform: translateY(-40%); }
+html.motion .serv-nome { font-size: clamp(3.4rem, 7vw, 7.6rem); }
+html.motion .serv-n, html.motion .serv-txt p { opacity: 0; }
+
+/* 3 · Mural editorial */
+html.motion .cena-mural .palco { background: var(--linho); }
+html.motion .mural-tit { position: absolute; z-index: 5; left: var(--lado); top: 5.4rem; font-size: clamp(2.6rem, 5vw, 5rem); }
+html.motion .mural-sub { position: absolute; z-index: 5; left: var(--lado); top: calc(5.4rem + clamp(2.6rem, 5vw, 5rem)); }
+html.motion .mural { position: absolute; inset: 0; display: block; margin: 0; }
+html.motion .peca { position: absolute; }
+html.motion .peca .frame { aspect-ratio: auto; height: 100%; }
+html.motion .peca-leg { position: absolute; left: 0; top: 100%; white-space: nowrap; opacity: 0; }
+html.motion .p1 { left: 38vw; top: 22vh; width: 22vw; height: 29vw; z-index: 2; }
+html.motion .p2 { left: 9vw; top: 34vh; width: 15vw; height: 15vw; }
+html.motion .p3 { left: 14vw; top: 64vh; width: 11vw; height: 14.5vw; }
+html.motion .p4 { left: 64vw; top: 14vh; width: 19vw; height: 14vw; }
+html.motion .p5 { left: 66vw; top: 46vh; width: 12vw; height: 16vw; }
+html.motion .p6 { left: 81vw; top: 52vh; width: 11vw; height: 11vw; }
+html.motion .p7 { left: 28vw; top: 72vh; width: 8vw; height: 10.5vw; }
+html.motion .cafe { display: block; position: absolute; inset: 0; z-index: 8; background: var(--cafe); opacity: 0; }
+
+/* 4 · Espaço — horizontal no desktop */
+@media (min-width: 769px) {
+  html.motion .cena-espaco .palco { background: var(--cafe); }
+  html.motion .trilho { display: flex; align-items: center; gap: 6vw; height: 100%; width: max-content; padding: 0 14vw 0 var(--lado); grid-template-columns: none; }
+  html.motion .esp-abre { width: 30vw; }
+  html.motion .sala { flex: none; }
+  html.motion .sala .frame { height: 56vh; width: auto; }
+  html.motion .s-poltronas { align-self: flex-end; margin-bottom: 12vh; }
+  html.motion .s-lustre .frame { height: 66vh; aspect-ratio: 3 / 5; }
+  html.motion .s-lustre { align-self: flex-start; margin-top: 10vh; }
+  html.motion .s-pedicure .frame { height: 44vh; }
+  html.motion .s-equipe .frame { height: 62vh; }
+  html.motion .sala .frame { clip-path: inset(12% 12% 12% 12%); }
+}
+
+/* 5 · Como agendar */
+html.motion .cena-agendar { position: relative; z-index: 2; margin-top: -100svh; }
+html.motion .cena-agendar .palco { display: block; background: var(--creme); }
+html.motion .ag-txt { position: absolute; left: var(--lado); top: 50%; width: 42vw; transform: translateY(-50%); }
+html.motion .ag-passos li { opacity: .25; }
+html.motion .conversa { position: absolute; right: calc(var(--lado) + 3rem); top: 50%; width: min(36vw, 440px); transform: translateY(-50%); }
+html.motion .msg { opacity: 0; }
+
+/* 6 · Localização: desce como uma persiana */
+html.motion .cena-local { clip-path: inset(0 0 100% 0); }
+
+/* 7 · Final: a caixa cresce até ocupar a tela */
+html.motion .final-caixa { min-height: 100svh; align-content: center; }
+
+/* ---------- Celular ---------- */
+@media (max-width: 768px) {
+  .prog { top: 0; left: 0; right: 0; width: auto; height: 3px; transform: none; }
+  .prog-linha { left: 0; right: 0; top: 1px; bottom: auto; width: auto; height: 1px; }
+  .prog-cheio { transform-origin: 0 50%; transform: scaleX(0); }
+  .prog-pontos { display: none; }
+
+  html.motion .ab-foto { width: 58vw; }
+  html.motion .ab-tit { font-size: 25vw; }
+  html.motion .ab-studio { top: 13vh; }
+  html.motion .ab-la, html.motion .ab-vie { top: 64vh; }
+  html.motion .ab-linha { bottom: 5vh; right: var(--lado); }
+
+  html.motion .serv-tit { top: 4.8rem; }
+  html.motion .serv-foto { right: auto; left: calc(50% - 15vh); top: 8.5rem; height: 40vh; margin: 0; }
+  html.motion .serv-txt { top: auto; bottom: 4vh; width: auto; right: var(--lado); transform: none; }
+  html.motion .serv-nome { font-size: 3.2rem; margin-bottom: .6rem; }
+  html.motion .serv-txt p { font-size: 1rem; }
+
+  html.motion .mural-tit { top: 4.8rem; }
+  html.motion .mural-sub { top: calc(4.8rem + 3rem); font-size: 1rem; }
+  html.motion .so-desk, html.motion .p6, html.motion .p7 { display: none; }
+  html.motion .p1 { left: 20vw; top: 26vh; width: 54vw; height: 72vw; }
+  html.motion .p2 { left: 4vw; top: 67vh; width: 30vw; height: 30vw; }
+  html.motion .p3 { left: 37vw; top: 70vh; width: 24vw; height: 32vw; }
+  html.motion .p4 { left: 64vw; top: 66vh; width: 32vw; height: 24vw; }
+  html.motion .p5 { left: 77vw; top: 20vh; width: 19vw; height: 25vw; }
+
+  html.motion .cena-espaco .palco { height: auto; overflow: visible; padding: 6rem var(--lado); }
+  html.motion .sala .frame { clip-path: inset(10% 14% 10% 14%); }
+  html.motion .s-lustre, html.motion .s-equipe { margin-left: 16%; }
+
+  html.motion .cena-agendar { margin-top: 0; }
+  html.motion .ag-txt { top: 5rem; width: auto; right: var(--lado); transform: none; }
+  html.motion .ag-tit { font-size: 2.6rem; }
+  html.motion .ag-passos { margin-top: 1rem; gap: .2rem; }
+  html.motion .ag-passos li { font-size: 1.05rem; }
+  html.motion .conversa { left: var(--lado); right: var(--lado); top: auto; bottom: 4vh; width: auto; transform: none; padding: 1rem; }
+  html.motion .msg { font-size: .95rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
